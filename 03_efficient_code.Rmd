@@ -1,0 +1,347 @@
+---
+title: "Efficient Code"
+author: <br>Dr Heather Turner<br>RSE Fellow, University of Warwick, UK<br>
+date: 31 March 2022
+output:
+  xaringan::moon_reader:
+    chakra: libs/remark-latest.min.js
+    mathjax: "https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML"
+    css: ["default", "extra.css"]
+    lib_dir: libs
+    keep_md: true
+    nature:
+      beforeInit: "macros.js"
+      highlightStyle: googlecode
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: "16:9"
+always_allow_html: yes      
+---
+
+
+```{r setup, include=FALSE}
+options(digits = 4)
+options(width = 67)
+library(knitr)
+library(kableExtra)
+opts_chunk$set(echo = TRUE, dev = "png", dpi = 300,
+               comment = "#", eval = TRUE, 
+               fig.width = 5, fig.height = 5, 
+               knitr.table.format = "markdown")
+# trim white space top and right of plot
+knit_hooks$set(small.mar = function(before, options, envir) {
+    if (before) par(mar = c(4, 5, 2, 1))
+})
+# trim white space when par won't work
+library(magick)
+knit_hooks$set(crop = function(before, options, envir) {
+    if (before || isTRUE((fig.num <- options$fig.num) == 0L))
+        return()
+    paths = fig_path(options$fig.ext, options, fig.num)
+    for (f in paths) image_write(image_trim(image_read(f)), f)
+})
+# function to put ``` when compiling Rmd
+ticks <- function() "```"
+set.seed(1)
+```
+
+---
+
+class: inverse middle
+
+# Memory management
+
+---
+
+# Overview
+
+Objects created in R are stored in memory. This has the advantage that
+objects can be accessed faster, but R slows down as the memory fills up.
+Creating objects also takes time. Therefore
+
+ - re-use temporary variables. The allocated storage will be re-used if
+the vector has the same length.
+ - save results for re-use, e.g. index variables
+ - don't save intermediate results unnecessarily -- compute on-the-fly
+ - remove large objects when no longer needed
+
+
+
+# Big Data
+
+Modern computers have enough RAM to work with millions of records 
+using standard functions.
+
+Packages to work more efficiently with big data:
+
+ - **data.table** faster operations on data frames; read/write 
+large CSVs
+ - **feather**, **fst** read/write (parts of) binary files
+ - **dplyr** manipulation of data in databases.
+ - **bigmemory**, **biganalytics** faster matrix operations,
+generalized linear models, kmeans
+
+Parallelisation can also help, see later.
+
+
+# Growing Objects
+
+Adding to an object in a loop
+
+```{r adding}
+res <- NULL
+for (i in 1:5000) res <- c(res, 1)
+``` 
+   
+may force a copy to be made at each iteration, with each copy stored until the
+loop has completed. 
+   
+It is far better to create an object of the necessary size first  
+
+```{r empty.object}
+res <- numeric(5000)
+for (i in seq_along(res)) res[i] <- 1
+```
+
+
+# Copy-on-Change
+
+R usually copies an object to make changes to it.
+
+`tracemem` can be used to trace copies of an object
+
+```{r trace.growing}
+z <- NULL
+for (i in 1:3){ z <- c(z,1); print(tracemem(z)) }
+```
+```{r trace.growing2}
+z <- numeric(2); print(tracemem(z))
+```
+
+```{r trace.growing3}
+for (i in 1:2){z[i] <- i;print(tracemem(z))}
+``` 
+
+???
+
+makes copy for each separate block of code
+e.g. if run with above in one go interactively no copies
+     if run in separate chunks 1 copy
+
+# Benchmarking
+
+There will usually be many ways to write code for a given task. To compare
+alternatives, we can benchmark the expression
+
+```{r benchmark, eval = TRUE}
+library(rbenchmark)
+benchmark({res <- NULL; 
+  for (i in 1:5000) res <- c(res, 1)})
+```
+
+```{r benchmark2, eval = TRUE}
+benchmark({res <- numeric(5000)
+  for (i in seq_along(res)) res[i] <- 1})$elapsed
+``` 
+
+# For Loops
+
+For loops are an intuitive way to write code, but can be very inefficient. 
+
+`for` is a function, `:` or `seq_along` is another
+function, each use of `[` is a call to a function, \ldots, so a loop
+involves many nested function calls.
+
+Therefore avoid for loops where possible, otherwise make as lean as 
+possible, by taking whatever can be outside the loop.
+
+
+# Vectorization
+
+Vectorization is operating on vectors (or vector-like objects) rather than
+individual elements.
+
+Many operations in R are vectorized, e.g.
+
+```{r vectoizedOp}
+x <- 1:3
+y <- 3:1
+x == y
+x + y
+``` 
+
+
+# Vectorization and Matrices
+
+Matrix algebra can be a form of vectorization
+Vectorizations applies to matices too, not only through matrix algebra
+
+```{r matrixAlg}
+M <- matrix(1:4, nrow = 2, ncol = 2)
+M + M
+```   
+
+but also vectorized functions
+
+```{r vectorizedM}
+M <- M + .3
+round(M)
+``` 
+
+
+# Recycling
+
+Vectorized functions will recycle shorter vectors to create vectors of the
+same length
+
+```{r recycling}
+1:4 + 0:1 + 2
+``` 
+
+This is particularly useful for single values
+
+```{r recycle1}
+1:5 > 1
+``` 
+
+and for generating regular patterns
+
+```{r recyclePaste}
+paste0(rep(1:3, each = 2), c("a", "b"))
+``` 
+
+
+# `ifelse`
+
+`ifelse` is a vectorised version of `if`/`else`
+
+```{r ifelse}
+x <- c(5, 2, 9, 12)
+ifelse(x > 6, 2 * x, 3 * x)
+``` 
+
+Recycling is also very useful here
+
+```{r recycleIfElse}
+x <- 1:10
+ifelse(x %% 2 == 0, 5, 12)
+``` 
+
+However indexing is more efficient than `ifelse`
+
+```{r indexing}
+y <- rep.int(12, 10)
+y[x %% 2 == 0] <- 5
+y
+```
+
+
+# `apply`
+`apply` provides a way to apply a function to every row or column of a matrix
+```{r apply}
+M <- matrix(1:20, 2, 10)
+apply(M, 1, quantile, 0.75)
+apply(M, 2, mean)
+``` 
+
+
+
+# `lapply` and `sapply`
+`lapply` applies a given function to each element of a list
+```{r lapply}
+l <- list()
+l$x <- 1:3
+l$y <- 4:6
+lapply(l, mean)
+``` 
+`sapply` acts similarly, but try to simplify the result
+```{r sapply}
+sapply(l, mean)
+``` 
+
+
+# Matrix Methods
+Functions such as `apply` are very general. R provides fast
+implementations for special cases
+```{r matMeth}
+colMeans(M)
+rowMeans(M)
+colSums(M)
+rowSums(M)
+```   
+
+
+# More Matrix Methods
+`rowsum` sums over rows within each level of a grouping variable
+```{r rowsum}
+M <- matrix(1:8, 4)
+rowsum(M, rep(1:2, each = 2))
+``` 
+The packages `matrixStats` provides even more ``matricized''
+operations, including medians and standard deviations
+```{r matrixStats}
+library(matrixStats); colMedians(M)
+```
+```{r matrixStats2}
+rowSds(M)
+```  
+
+---
+
+class: inverse middle
+
+# Parallelisation
+
+---
+
+# Parallelisation
+
+Most functions in R run on a single core of your machine. The 
+**parallel** package, part of the default R distribution, provides 
+parallel versions of the `apply`-type functions.
+
+Parallelisation is most straight-forward to implement for
+*embarrassingly parallel* problems, such as applying a function to
+elements of a list.
+
+
+# parApply on Multiple Cores
+The first step is to make a cluster from the available cores, here 2
+```{r makeCluster}
+library(parallel)
+clus <- makeCluster(2)
+``` 
+Then `parApply` is used exactly as `apply`, but has an additional
+argument to specify the cluster on which to run the code
+```{r parApply}
+res <- parApply(clus, M, 1, quantile, 0.75)
+```
+There are also special versions for applying to rows (R) and cols (C)
+```{r parRapply}
+res <- parRapply(clus, M, quantile, 0.75)
+res <- parCapply(clus, M, mean)
+```   
+
+
+# parLapply and parSapply
+Similarly `parLapply` and `parSapply` mirror `lapply` and `sapply`
+```{r parLapply}
+parLapply(clus, l, mean)
+```
+```{r parLapply2}
+parSapply(clus, l, mean)
+``` 
+Any number of R commands can be run after the cluster has been created. At the end, run
+```{r stopClus}
+stopCluster(clus)
+``` 
+
+# General Principles
+Try to use vectorized functions where possible.
+
+Otherwise use the `apply` family (and parellelise if necessary). Custom
+functions will often be useful here to pass to `apply` etc.
+
+Try to keep for loops for true iterative computations or tasks that are fast
+in any case (optimizing code takes time!)
+

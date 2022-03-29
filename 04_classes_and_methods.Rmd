@@ -1,0 +1,691 @@
+---
+title: "Class and Methods"
+author: <br>Dr Heather Turner<br>RSE Fellow, University of Warwick, UK<br>
+date: 31 March 2022
+output:
+  xaringan::moon_reader:
+    chakra: libs/remark-latest.min.js
+    mathjax: "https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML"
+    css: ["default", "extra.css"]
+    lib_dir: libs
+    keep_md: true
+    nature:
+      beforeInit: "macros.js"
+      highlightStyle: googlecode
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: "16:9"
+always_allow_html: yes      
+---
+
+
+```{r setup, include=FALSE}
+options(digits = 4)
+options(width = 67)
+library(knitr)
+library(kableExtra)
+opts_chunk$set(echo = TRUE, dev = "png", dpi = 300,
+               comment = "#", eval = TRUE, 
+               fig.width = 5, fig.height = 5, 
+               knitr.table.format = "markdown")
+# trim white space top and right of plot
+knit_hooks$set(small.mar = function(before, options, envir) {
+    if (before) par(mar = c(4, 5, 2, 1))
+})
+# trim white space when par won't work
+library(magick)
+knit_hooks$set(crop = function(before, options, envir) {
+    if (before || isTRUE((fig.num <- options$fig.num) == 0L))
+        return()
+    paths = fig_path(options$fig.ext, options, fig.num)
+    for (f in paths) image_write(image_trim(image_read(f)), f)
+})
+# function to put ``` when compiling Rmd
+ticks <- function() "```"
+set.seed(1)
+```
+
+---
+
+class: inverse middle
+
+# Object-oriented programming
+
+---
+
+# Object-oriented programming (OOP)
+
+**Generic** functions provide a unified interface to **methods** for 
+objects of a particular **class**, e.g.
+
+```{r generic}
+library(palmerpenguins)
+summary(penguins$species)
+summary(penguins$flipper_length_mm)
+```
+
+
+---
+
+# Why use OOP?
+
+`summary()` could contain several if-else statements, but 
+ - the code would become hard to follow
+ - only the function authors (R Core) could add new implementations
+ 
+OOP 
+ - separates the code for different data types
+ - avoids duplicating code by method inheritance from parent class(es) to child class (subclass)
+ - makes it possible for external developers to add methods for new types of object.
+ 
+---
+
+# OOP Systems in R
+
+There are 3 main OOP systems in use:
+
+* **S3** 
+    - Used in base R and most recommended/CRAN packages
+    - Use unless you have good reason not to
+* **S4**
+    - Used on Bioconductor
+    - Allow more complex relationships between classes and methods
+* **R6**
+    - More similar to OOP in other languages
+    - May prefer if S3 insufficient and not aiming for Bioconductor
+    
+???
+R6 v similar to Python OOP (also Java, C++)
+Julia not an OOP language, but does have concept of multiple dispatch
+- so maybe a bit more like S3 idea?
+
+---
+
+class: inverse middle
+
+# S3
+
+---
+
+# S3 objects
+
+An S3 object has a `"class"` attribute:
+
+```{r}
+attr(penguins$species, "class")
+unique(penguins$species)
+```
+With `unclass()` we obtain the underlying object, in this case an integer vector 
+
+```{r}
+species_no <- unclass(penguins$species)
+class(species_no)
+unique(species_no)
+attributes(species_no)
+```
+---
+
+# Creating an S3 object
+
+You can use `structure` to define an S3 object with a class attribute:
+
+```{r, echo = FALSE}
+dp <- 2
+structure(list(pi = trunc(10^dp * pi)/10^dp, dp = dp),
+          class = "pi_trunc")
+```
+
+Potentially further attributes can be added at the same time, but typically we would use a list to return all the required values.
+
+Alternatively, we can add a class attribute using the `class()` helper function:
+
+```{r}
+res <- list(pi = trunc(10^dp * pi)/10^dp, dp = dp)
+class(res) <- "pi_trunc"
+```
+
+---
+
+# S3 Generic Functions
+
+S3 generic functions are simple wrappers to `UseMethod()`
+
+```{r}
+print
+```
+
+The `UseMethod()` function takes care of *method dispatch*: selecting the S3 method according to the class of the object passed as the first argument.
+
+
+```{r}
+class(penguins$species[1:3])
+print(penguins$species[1:3])
+```
+
+Here `print()` dispatches to the method `print.factor()`.
+
+---
+
+# Inheritance
+
+The class of an S3 object can be a vector of classes
+```{r}
+fit <- glm(y ~ x, data = data.frame(y = 1:3, x = 4:6))
+class(fit)
+```
+We say penguins is a `"glm"` object that _inherits_ from class `"lm"`.
+
+The `inherits()` function can be used to test if an object inherits from a given class
+```{r}
+inherits(penguins, "glm")
+```
+---
+
+# Method dispatch
+
+An S3 object can have more than one class e.g.
+```{r}
+class(penguins)
+```
+`UseMethod()` works along the vector of classes (from the first class to the last), looks for a method for each class and dispatches to the first method it finds.
+
+If no methods are defined for any of class, the default is used , e.g. `print.default()`.
+
+If there is no default, an error is thrown.
+
+---
+
+# S3 Methods
+
+See the methods for a given S3 class
+```{r}
+methods(class = "nls")
+```
+
+See the methods for a given generic function
+
+```{r}
+methods("coef")
+```
+
+Asterisked methods are not exported.
+
+---
+
+# View S3 methods
+
+S3 methods need not be in the same package as the generic.
+
+Find an unexported method with `getS3method()`
+
+```{r}
+getS3method("coef", "default")
+```
+
+In code, call the generic, rather than calling the method directly.
+
+---
+
+# Writing S3 Methods
+
+The arguments of new method should be a superset of the arguments of the generic
+
+```{r}
+args(print)
+```
+
+```{r}
+print.pi_trunc <- function(x, abbreviate = TRUE, ...){
+  dp_text <- ifelse(abbreviate, "d.p.", "decimal places")
+  cat("pi: ", x$pi, " (", x$dp, " ", dp_text, ")", sep = "")
+}
+print(res)
+```
+---
+
+# `NextMethod()`
+
+We can explicitly call the next method that would be called by `UseMethod()` to reuse code whilst customising as required
+```{r}
+body(t.data.frame)
+```
+
+```{r}
+body(rep.factor)
+```
+
+It is possible to call `NextMethod()` with arguments but it is safer to recall the generic with new arguments in this case.
+???
+We have seen that `UseMethod()` will dispatch to the method of the next class in the class vector if a method is not defined for the first class.
+
+---
+
+# Implicit classes
+
+`is.object()` can be used to find out if an object has a class (S3/S4/R6)
+```{r}
+is.object(factor(1:3))
+is.object(1:3)
+```
+
+An object that does not have an explicit class has an implicit class that will be used for S3 method dispatch. The implicit class can be found with `.class2()`
+```{r}
+M <- matrix(1:12, nrow = 4)
+attr(M, "class")
+.class2(M)
+```
+
+???
+.class2 since R 4.0.0
+
+---
+
+# Attributes
+
+We can take advantage of existing S3 methods by returning an object of a existing S3 class or an implicit class, using attributes to add custom information
+```{r}
+x <- matrix(c(1:5, 2*(1:5)), ncol = 2)
+center_x <- scale(x, scale = FALSE)
+class(center_x)
+summary(center_x)
+```
+```{r}
+attr(center_x, "scaled:center")
+```
+This can avoid the need to define new classes and methods, in simple cases.
+
+---
+
+# Your Turn
+
+1. Create a function to fit an ordinary least squares model given a response `y` and an explanatory variable `x`, that returns an object of a new class `"ols"`, that inherits from `"lm"`.
+2. Define a print method for your function that it works as follows
+```{r, echo = FALSE}
+ols <- function(x, y, ...){
+  fit <- lm(y ~ x, data =  data.frame(x = x, y = y))
+  class(fit) <- c("ols", class(fit))
+  fit
+}
+print.ols <- function(x, ...){
+  cat("Intercept: ", coef(x)[1], "\n")
+  cat("Slope: ", coef(x)[2], "\n")
+}
+```
+
+```{r}
+res <- ols(x = 1:3, y = rnorm(3))
+res
+```
+```{r, echo = FALSE}
+ols <- function(x, y, ...){
+  fit <- lm(y ~ x, data =  data.frame(x = x, y = y))
+  class(fit) <- c("ols", class(fit))
+  fit
+}
+print.ols <- function(x, ...){
+  cat("Intercept: ", coef(x)[1], "\n")
+  cat("Slope: ", coef(x)[2], "\n")
+}
+```
+3. Write a summary method for your "ols" class that uses `NextMethod()` to compute the usual "lm" summary, but return an object of class "summary.ols". Write a print method for the `"summary.ols"` class to return output of the form
+
+```
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)   -0.217      1.141   -0.19     0.88
+x             -0.105      0.528   -0.20     0.88
+
+Residual standard error: 0.747
+Multiple R-squared:  0.0377
+```
+
+???
+will get issues with inheriting e.g. add1 method
+
+---
+
+class: inverse middle
+
+# S4
+
+---
+
+# Overview of S4
+
+S4 methods 
+ - use specialised functions for creating classes, generics and methods
+ - allow _multiple inheritance_: a class can have multiple parents
+ - allow _multiple dispatch_: method selection based on the class of multiple objects
+ 
+The **methods** package provides the functions required to use S4 classes and methods, so always load this package when using S4.
+
+???
+use import instead
+
+---
+
+# S4 Classes
+
+An S4 class can be defined with `setClass()`, with at least two arguments
+ - A **name**, by convention in `UpperCamelCase`.
+ - A named character vector specifying the names and classes of the **slots** (fields). Using the pseudo class `ANY` allows a slot to accept any type of object.
+ 
+```{r}
+setClass("Person", 
+  slots = c(
+    name = "character", 
+    date_of_birth = "Date",
+    date_of_death = "Date",
+    age_at_death = "numeric"
+  )
+)
+```
+
+---
+
+# Creating a new instance
+
+A new instance of the S4 object can be created using `new()`
+
+```{r}
+florence <- new("Person", name = "Florence Nightingale",
+                date_of_birth = as.Date("1820-05-12"),
+                date_of_death = as.Date("1910-08-13"),
+                age_at_death = 90)
+str(florence)
+```
+
+---
+
+# Examining S4 objects
+
+Find the type of S4 class
+```{r}
+is.object(florence)
+isS4(florence)
+.class2(florence)
+```
+Extract the value of a slot
+```{r}
+getSlots("Person")
+florence@age_at_death # or slot(florence, "age_at_death")
+```
+
+???
+class() will only show class itself, not classes it inherits from
+
+---
+
+# Prototype
+
+The `prototype` argument can be used to specify default values, enabling partial specification
+
+```{r}
+setClass("Person", 
+  slots = c(
+    name = "character", 
+    date_of_birth = "Date",
+    date_of_death = "Date",
+    age_at_death = "numeric"
+  ),
+  prototype = list(
+    name = NA_character_, 
+    date_of_birth = as.Date(NA),
+    date_of_death = as.Date(NA),
+    age_at_death = NA_real_
+  )
+)
+```
+???
+be sure to use `list()` not `c()` for prototype (easy to do if copy-paste
+slot definition to edit)
+
+---
+
+# `initialize()`
+
+An `initialize()` method can be used for more control over initialization
+
+```{r}
+setMethod("initialize", "Person", 
+    function(.Object, ...) {
+      # initialize with default method (named arguments override defaults)
+      .Object <- callNextMethod(.Object, ...)
+      # compute age at death if not specified
+      year <- function(x) as.numeric(format(x, "%Y"))
+      m_day <- function(x) as.numeric(format(x, "%m%d"))
+      if (is.na(.Object@age_at_death)){
+        n_year <- year(.Object@date_of_death) - year(.Object@date_of_birth)
+        birthday <- m_day(.Object@date_of_death) >= m_day(.Object@date_of_birth)
+        .Object@age_at_death <- n_year - !birthday
+      }
+      .Object
+    })
+```
+
+---
+
+# Creating a new S4 obect from an old one
+
+```{r}
+florence <- new("Person", name = "Florence Nightingale",
+                date_of_birth = as.Date("1820-05-12"))
+str(florence)
+florence <- initialize(florence, date_of_death = as.Date("1910-08-13")) 
+str(florence)
+```
+
+---
+
+# Inheritance
+
+The `contains` argument to `setClass()` specifies a class or classes to inherit slots and behaviour from
+
+```{r}
+setClass("BanknoteCharacter", 
+  contains = "Person", 
+  slots = c(
+    denomination = "numeric",
+    first_issue = "Date",
+    last_legal = "Date"
+  ),
+  prototype = list(
+    denomination = NA_real_,
+    first_issue = as.Date(NA),
+    last_legal = as.Date(NA)
+  )
+)
+```
+
+---
+
+# New instance of subclass
+
+Creating a new instance of the subclass will fill in the slots of the superclass
+
+```{r}
+seriesD_10GBP <- new("BanknoteCharacter", name = "Florence Nightingale", 
+                     date_of_birth = as.Date("1820-05-12"), 
+                     date_of_death = as.Date("1910-08-12"))
+str(seriesD_10GBP)
+```
+
+---
+
+# Show defined S4 Class
+
+Use `showClass()` to show (print) an S4 Class
+
+```{r}
+showClass("Person")
+```
+
+---
+
+# Helper function
+
+If a user is to create these objects, define a helper function named by the class
+
+```{r}
+Person <- function(name = NA, date_of_birth = NA, date_of_death = NA) {
+  new("Person", 
+      name = as.character(name), 
+      date_of_birth = as.Date(date_of_birth), 
+      date_of_death = as.Date(date_of_death))
+}
+```
+
+Put computation in the `initialize` method where possible, so that it can be reused by subclasses.
+
+---
+
+# Validator function
+
+Use `setValidity()` to check constraints beyond data type, e.g. that all slots have the same 
+length
+```{r, echo = FALSE}
+setValidity("Person", function(object) {
+  len <- vapply(slotNames("Person"), function(x) length(slot(object, x)),
+                numeric(1))
+  if (!all(len == len[1])){
+    "slots should all be the same length"
+  } else {
+    TRUE
+  }
+})
+```
+```{r, error = TRUE}
+Person(name = c("Ada Lovelace", "Grace Hopper"), 
+       date_of_birth = as.Date("1815-12-10"))
+```
+
+---
+
+# S4 Generic Functions
+
+S4 generic functions are (usually) a wrapper to `standardGeneric()`, e.g.
+
+```{r}
+getGeneric("kronecker")
+```
+
+By default, all arguments apart from `...` are used for method dispatch.
+
+---
+
+# Writing S4 generic functions
+
+Use `setGeneric` to define a new generic, with the optional `signature` argument to specify the arguments to use for method dispatch
+
+```{r}
+setGeneric("myGeneric", 
+  function(x, ..., verbose = TRUE) standardGeneric("myGeneric"),
+  signature = "x"
+)
+```
+
+S4 generics use `lowerCamelCase` names by convention.
+
+???
+Do not use {} in the function definition here.
+
+---
+
+# S4 Methods
+
+S4 methods for a generic function are defined with `setMethod()`, which takes three main arguments
+
+ - The **name** of the generic function.
+ - The **signature** specifying the classes for one or more of the arguments used  for method dispatch
+ - The method, defined as a function with a superset of the arguments of the generic
+
+---
+
+# Writing S4 Methods
+
+```{r}
+args(getGeneric("show"))
+```
+
+```{r}
+setMethod("show", "Person", function(object) {
+  cat(object@name, "\n",
+      "Born: ", format(object@date_of_birth, "%d %B %Y"), "\n",
+      "Died: ", format(object@date_of_death, "%d %B %Y"), 
+                " (aged ", object@age_at_death, ")\n",
+      sep = "")
+})
+florence
+```
+
+---
+
+# Accessor generics
+
+It is good practice to define generics to get and set slots that the user should have access to.
+
+For example, a generic to get and set the date of birth
+
+```{r}
+setGeneric("dob", function(x) standardGeneric("dob"))
+setGeneric("dob<-", function(x, value) standardGeneric("dob<-"))
+```
+
+---
+
+# Accessor methods
+
+Methods can then be defined for multiple classes using the same interface.
+
+Access the date of birth from a Person object
+```{r}
+setMethod("dob", "Person", function(x) x@date_of_birth)
+dob(florence)
+```
+Change the date of birth
+```{r}
+setMethod("dob<-", "Person", function(x, value) {
+  x@date_of_birth <- as.Date(value)
+  validObject(x)
+  x
+})
+dob(florence) <- "1820-05-11"
+dob(florence)
+```
+---
+
+# Method dispatch
+
+* One argument, single inheritance along vector of classes:
+    - Same as for S3
+* One argument, multiple inheritance:
+    - Follow all possible paths from child class to parent classes
+    - Dispatch to first method found with the shortest path
+* Multiple dispatch 
+    - As multiple inheritance, but follow possible paths for multiple arguments
+    
+Keep it simple: dispatch on one or two arguments usually sufficient.
+
+Avoid ambiguous cases by defining methods earlier in path.
+
+---
+
+# Pseudo classes
+
+Methods can be defined for the `ANY` pseudo-class
+ - Only selected if no method found for real classes
+ 
+The `MISSING` pseudo-class is useful for dispatch on two arguments: allow different behaviour if only one argument specified.
+
+
+---
+
+# Your Turn
+
+
+
+
+---
+
+# Refs
+

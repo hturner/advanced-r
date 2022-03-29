@@ -1,0 +1,298 @@
+---
+title: "R Programming"
+author: <br>Dr Heather Turner<br>RSE Fellow, University of Warwick, UK<br>
+date: 31 March 2022
+output:
+  xaringan::moon_reader:
+    chakra: libs/remark-latest.min.js
+    mathjax: "https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML"
+    css: ["default", "extra.css"]
+    lib_dir: libs
+    keep_md: true
+    nature:
+      beforeInit: "macros.js"
+      highlightStyle: googlecode
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: "16:9"
+always_allow_html: yes      
+---
+
+
+```{r setup, include=FALSE}
+options(digits = 4)
+options(width = 67)
+library(knitr)
+library(kableExtra)
+opts_chunk$set(echo = TRUE, dev = "png", dpi = 300,
+               comment = "#", eval = TRUE, 
+               fig.width = 5, fig.height = 5, 
+               knitr.table.format = "markdown")
+# trim white space top and right of plot
+knit_hooks$set(small.mar = function(before, options, envir) {
+    if (before) par(mar = c(4, 5, 2, 1))
+})
+# trim white space when par won't work
+library(magick)
+knit_hooks$set(crop = function(before, options, envir) {
+    if (before || isTRUE((fig.num <- options$fig.num) == 0L))
+        return()
+    paths = fig_path(options$fig.ext, options, fig.num)
+    for (f in paths) image_write(image_trim(image_read(f)), f)
+})
+# function to put ``` when compiling Rmd
+ticks <- function() "```"
+set.seed(1)
+```
+
+---
+
+class: inverse middle
+
+# Foundations of open code and software
+
+---
+
+Benefits of code sharing 
+
+Addressing concerns 
+
+Good enough practices for reproducible research 
+
+---
+
+class: inverse middle
+
+# Introduction to git/GitHub
+
+---
+
+# GitHub
+
+Warwick GitHub Enterprise: https://github.warwick.ac.uk/
+ - Use for Warwick-specific, private projects
+ - Username will be ITS username
+
+GitHub: https://github.com/
+ - Free version allows private/public projects
+ - Username recommendations
+    - Incorporate your actual name
+    - Reuse your username from other contexts.
+    - Use a name you can share in professional contexts.
+    - Use all lower case letters.
+
+---
+
+# Create a GitHub repository
+
+1. Login or sign up for a free account at https://www.github.com.
+    - Recommend to use personal email
+2. Click on the `+` in the top right to create a new, public, repository called `github-intro`.
+    - Choose to initialize the repository with a README file
+    
+---
+
+# Edit on GitHub
+
+1. Click the pencil icon on the README.md file to edit.
+ - Update the title
+ - Add a short sentence (you can use markdown syntax)
+2. Scroll down to the **Commit changes** section
+ - Add a short description of your changes in the first dialog box, e.g. `add basic information to README`
+ - Click the green `Commit changes` button
+
+
+See [Basic writing and formatting syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for more on editing markdown.
+
+???
+guide for good commit messages?
+license for off snippets? (CC0, CC-BY, Unlicense)
+
+---
+
+# Continue experimenting
+
+* upload picture
+* create file in new folder
+
+---
+
+# Using git locally
+
+Check if you already have git by running the following command in a terminal (e.g. Terminal tab on RStudio).
+
+On MacOS/Linux (or Windows with Rtools)
+```
+which git
+```
+
+On Windows
+
+```
+where git
+```
+
+MacOS: If asked to install the Xcode command line tools, say yes - this will install git.
+
+---
+
+# Installing git
+
+Windows: 
+ - Use the installer from https://git-scm.com/downloads
+ - Check RStudio can find the git executable
+     - Go to Tools > Global Options > Git/SVN to check
+     - Restart RStudio before trying to use git
+     
+Linux:
+```
+sudo apt-get install git
+```
+or
+```
+sudo yum install git
+```
+
+---
+
+# Configure git
+
+Set the default name and email to associate with your git commits:
+
+```{r}
+library(usethis)
+use_git_config(
+  user.name = "Ada Lovelace",     # your full name
+  user.email = "ada@example.com" # email associated with GitHub account
+  )
+```
+
+To keep your email private
+   - Go to https://github.com/settings/emails, select “Keep my email address private” and “Block command line pushes that expose my email” options
+   - Configure git to use the address provided of the form <ID+username@users.noreply.github.com>
+   
+---
+
+# Check git setup
+
+```{r}
+git_sitrep()
+```
+
+---
+
+# Authentication
+
+GitHub requires authentication with a Personal Access Token or SSH key.
+
+| SSH keys                | PAT                 |
+|-------------------------|---------------------|
+| More setup (on Windows) | **usethis** helpers |
+| Once per computer+host  | Renew every 30 days (recommended) |
+| Need for HPC            | Need for **usethis**/other R packages |
+
+Recommend: setup SSH keys now, PAT later
+
+---
+
+# Windows: Enable OpenSSH
+
+1. In search, type 'Services' and click on the Services App.
+2. Find the OpenSSH Authentication Agent service in the list.
+3. Right-click on the OpenSSH Authentication Agent service, and choose 'Properties'.
+4. Change the Startup type: to Automatic. Click Apply.
+5. Click the Start button to change the service status to Running.
+6. Dismiss the dialog by clicking OK.
+
+---
+
+# Windows: Set the Shell in RStudio
+
+By default the terminal uses Windows command prompt. Switch to Git bash so that you can use the same commands as on MacOS/Linux.
+
+1. From the menu go to Tools > Global Options > Terminal.
+2. At "New terminals open with:" select "Git Bash". 
+3. In the Terminal tab, from the Terminal menu, select "Close all terminals. 
+4. Restart RStudio or open a new terminal.
+
+---
+
+# Windows: Set the `GIT_SSH` environment variable
+
+1. In the Terminal, type `where ssh`. Copy the path to OpenSSH, e.g. "C:\Windows\System32\OpenSSH\ssh.exe"
+2. In Search, start typing "environment" and select "Edit the system environment variables,
+3. Click Environment variables > New and 
+ - In the "Variable Name:" box type: GIT_SSH
+ - In the "Variable Value:" box, paste the path to OpenSSH.
+4. Click OK and exit the dialogue.
+
+---
+
+# Set up SSH keys 
+
+GitHub recommends to use Ed25519 keys (some services require keys generated with the older RSA algorithm).
+
+Check if you have existing keys, by running the terminal command
+```
+ls -al ~/.ssh/
+```
+Generate new keys, with the following command
+```
+ssh-keygen -t ed25519 -C "DESCRIPTIVE-COMMENT"
+```
+ - Replacing "DESCRIPTIVE-COMMENT" with e.g. "windows-github". 
+ - Save the key with a unique name, e.g. `~/.ssh/id_ed25519_github` (on Windows need to give full path)
+ - Use a strong passphrase (save in your password manager)
+
+???
+On MacOS with XCode may need to use ecsa (https://gist.github.com/brennanMKE/8e09593ca4064deab59da807077d8f53)
+`ssh-keygen -t ecdsa -C ""DESCRIPTIVE-COMMENT"`
+May need to run as superuser
+` sudo su`
+don't forget to `exit`
+---
+
+# Add SSH keys to ssh-agent
+
+This means you won't have to keep entering the passphrase.
+
+Linux or Windows (Git Bash) terminal
+```
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519_github
+```
+MacOS 12.0 terminal:
+```
+eval "$(ssh-agent -s)"
+ssh-add --apple-use-keychain ~/.ssh/id_ed25519_github
+```
+earlier versions 
+```
+eval "$(ssh-agent -s)"
+ssh-add -K ~/.ssh/id_ed25519_github
+```
+
+---
+
+# MacOS: add to SSH config
+
+On Sierra 10.12.2 and higher, open SSH config file (create first if necessary). E.g. from the terminal:
+
+```
+touch ~/.ssh/config
+open ~/.ssh/config
+```
+
+Add the following lines to the `config` file and save
+```
+Host github
+ AddKeysToAgent yes
+ UseKeychain yes
+ IdentityFile ~/.ssh/id_ed25519_github
+```
+
+
+
+
+
+

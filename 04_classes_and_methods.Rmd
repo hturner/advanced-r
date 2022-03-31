@@ -124,10 +124,9 @@ attributes(species_no)
 ---
 
 # Creating an S3 object
-
 You can use `structure` to define an S3 object with a class attribute:
 
-```{r, echo = FALSE}
+```{r, results = "hide"}
 dp <- 2
 structure(list(pi = trunc(10^dp * pi)/10^dp, dp = dp),
           class = "pi_trunc")
@@ -317,6 +316,22 @@ print.ols <- function(x, ...){
 ---
 
 # Your Turn (ctd)
+
+```{r}
+summary.ols <- function(object, ...){
+  res <- NextMethod()
+  class(res) <- c("summary.ols", class(res))
+  res
+}
+print.summary.ols <- function(x, ...){
+  cf <- coef(x)
+  cat("Coefficients: \n") 
+  print(cf)
+  cat("Residual standard error: ", x$sigma, "\n")
+  cat("Multiple R-squared: ", x$r.squared, "\n")
+}
+```
+
 
 ```
 Coefficients:
@@ -532,7 +547,7 @@ Put computation in the `initialize` method where possible, so that it can be reu
 
 Use `setValidity()` to check constraints beyond data type, e.g. that all slots have the same 
 length
-```{r, echo = FALSE}
+```{r, results = "hide"}
 setValidity("Person", function(object) {
   len <- vapply(slotNames("Person"), function(x) length(slot(object, x)),
                 numeric(1))

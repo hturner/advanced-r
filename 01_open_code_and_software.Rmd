@@ -369,7 +369,7 @@ For earlier versions of MacOS, use `-K` instead of `--apple-use-keychain`.
 1. Copy the contents of the public key you have generated. E.g.
 run the following in a terminal, then copy the output.
     ```{sh, eval = FALSE}
-    cat ~/.ssh/id_ed255219_github.pub
+    cat ~/.ssh/id_ed25519_github.pub
     ```
 2. On GitHub, click your profile picture (top right) and go to Settings > SSH and GPG keys. 
 3. Click “New SSH key”. Paste your public key in the “Key” box.

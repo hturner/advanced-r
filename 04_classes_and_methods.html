@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="author" content=" Dr Heather Turner RSE Fellow, University of Warwick, UK " />
     <meta name="date" content="2022-03-31" />
-    <script src="libs/header-attrs-2.11/header-attrs.js"></script>
+    <script src="libs/header-attrs-2.13/header-attrs.js"></script>
     <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
     <link rel="stylesheet" href="extra.css" type="text/css" />
   </head>
@@ -149,12 +149,13 @@ attributes(species_no)
 ---
 
 # Creating an S3 object
-
 You can use `structure` to define an S3 object with a class attribute:
 
 
-```
-# pi: 3.14 (2 d.p.)
+```r
+dp &lt;- 2
+structure(list(pi = trunc(10^dp * pi)/10^dp, dp = dp),
+          class = "pi_trunc")
 ```
 
 Potentially further attributes can be added at the same time, but typically we would use a list to return all the required values.
@@ -181,7 +182,7 @@ print
 ```
 # function (x, ...) 
 # UseMethod("print")
-# &lt;bytecode: 0x0000018b6b79f720&gt;
+# &lt;bytecode: 0x561aec8dcee8&gt;
 # &lt;environment: namespace:base&gt;
 ```
 
@@ -306,7 +307,7 @@ getS3method("coef", "default")
 #         cf
 #     else cf[!is.na(cf)]
 # }
-# &lt;bytecode: 0x0000018b779fa6b8&gt;
+# &lt;bytecode: 0x561af0dbe128&gt;
 # &lt;environment: namespace:stats&gt;
 ```
 
@@ -477,6 +478,23 @@ This can avoid the need to define new classes and methods, in simple cases.
 ---
 
 # Your Turn (ctd)
+
+
+```r
+summary.ols &lt;- function(object, ...){
+  res &lt;- NextMethod()
+  class(res) &lt;- c("summary.ols", class(res))
+  res
+}
+print.summary.ols &lt;- function(x, ...){
+  cf &lt;- coef(x)
+  cat("Coefficients: \n") 
+  print(cf)
+  cat("Residual standard error: ", x$sigma, "\n")
+  cat("Multiple R-squared: ", x$r.squared, "\n")
+}
+```
+
 
 ```
 Coefficients:
@@ -783,15 +801,16 @@ Put computation in the `initialize` method where possible, so that it can be reu
 Use `setValidity()` to check constraints beyond data type, e.g. that all slots have the same 
 length
 
-```
-# Class "Person" [in ".GlobalEnv"]
-# 
-# Slots:
-#                                                               
-# Name:           name date_of_birth date_of_death  age_at_death
-# Class:     character          Date          Date       numeric
-# 
-# Known Subclasses: "BanknoteCharacter"
+```r
+setValidity("Person", function(object) {
+  len &lt;- vapply(slotNames("Person"), function(x) length(slot(object, x)),
+                numeric(1))
+  if (!all(len == len[1])){
+    "slots should all be the same length"
+  } else {
+    TRUE
+  }
+})
 ```
 
 ```r
@@ -819,8 +838,8 @@ getGeneric("kronecker")
 # 
 # function (X, Y, FUN = "*", make.dimnames = FALSE, ...) 
 # standardGeneric("kronecker")
-# &lt;bytecode: 0x0000018b5f35db38&gt;
-# &lt;environment: 0x0000018b5f347e70&gt;
+# &lt;bytecode: 0x561aec9807c8&gt;
+# &lt;environment: 0x561aec96ef40&gt;
 # Methods may be defined for arguments: X, Y, FUN, make.dimnames
 # Use  showMethods(kronecker)  for currently available ones.
 ```

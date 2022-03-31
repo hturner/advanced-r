@@ -6,6 +6,7 @@ output: html_document
 ```{r setup, include=FALSE}
 # show code in output
 knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
 ```
 
 ## Function exercise
@@ -54,9 +55,16 @@ qq <- function(y, fun = qnorm, ...){
 ```
 
 ```{r t-QQ}
+t_statistic <- function(n) {
+    x <- rnorm(n)
+    y <- rnorm(n)
+    t.test(x, y)$statistic
+}
 # find parameters of line to add to QQ-plot
 # based on simulated t-statistics and reference t_18 distribution
+tstat <- replicate(1000, t_statistic(10))
 par <- qq(tstat, qt, df = 18)
+tval <- rt(1000, df = 18)
 
 ## QQ-plot
 dat <- data.frame(sample = tstat, theoretical = tval)

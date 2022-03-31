@@ -45,8 +45,6 @@ ticks <- function() "```"
 set.seed(1)
 ```
 
----
-
 class: inverse middle
 
 # Object-oriented programming
@@ -228,7 +226,7 @@ In code, call the generic, rather than calling the method directly.
 
 # Writing S3 Methods
 
-The arguments of new method should be a superset of the arguments of the generic
+The arguments of a new method should be a superset of the arguments of the generic
 
 ```{r}
 args(print)
@@ -297,37 +295,28 @@ This can avoid the need to define new classes and methods, in simple cases.
 ---
 
 # Your Turn
-
+```{r, echo = FALSE}
+ols <- function(x, y, ...){
+  fit <- lm(y ~ x, data =  data.frame(x = x, y = y))
+  class(fit) <- c("ols", class(fit))
+  fit
+}
+print.ols <- function(x, ...){
+  cat("Intercept: ", coef(x)[1], "\n")
+  cat("Slope: ", coef(x)[2], "\n")
+}
+```
 1. Create a function to fit an ordinary least squares model given a response `y` and an explanatory variable `x`, that returns an object of a new class `"ols"`, that inherits from `"lm"`.
 2. Define a print method for your function that it works as follows
-```{r, echo = FALSE}
-ols <- function(x, y, ...){
-  fit <- lm(y ~ x, data =  data.frame(x = x, y = y))
-  class(fit) <- c("ols", class(fit))
-  fit
-}
-print.ols <- function(x, ...){
-  cat("Intercept: ", coef(x)[1], "\n")
-  cat("Slope: ", coef(x)[2], "\n")
-}
-```
+    ```{r}
+    res <- ols(x = 1:3, y = rnorm(3))
+    res
+    ```
+3. Write a summary method for your "ols" class that uses `NextMethod()` to compute the usual "lm" summary, but return an object of class "summary.ols". Write a print method for the `"summary.ols"` class to return output as on the next page.
 
-```{r}
-res <- ols(x = 1:3, y = rnorm(3))
-res
-```
-```{r, echo = FALSE}
-ols <- function(x, y, ...){
-  fit <- lm(y ~ x, data =  data.frame(x = x, y = y))
-  class(fit) <- c("ols", class(fit))
-  fit
-}
-print.ols <- function(x, ...){
-  cat("Intercept: ", coef(x)[1], "\n")
-  cat("Slope: ", coef(x)[2], "\n")
-}
-```
-3. Write a summary method for your "ols" class that uses `NextMethod()` to compute the usual "lm" summary, but return an object of class "summary.ols". Write a print method for the `"summary.ols"` class to return output of the form
+---
+
+# Your Turn (ctd)
 
 ```
 Coefficients:
@@ -682,10 +671,24 @@ The `MISSING` pseudo-class is useful for dispatch on two arguments: allow differ
 
 # Your Turn
 
+1. Create an S4 class `Diag` to represent a diagonal matrix with two slots:
+ - `n` the number of rows/cols
+ - `x` the numeric values of the diagonal elements
+    Add a prototype to specify default values.
+2. Test your class by creating a new instance first without providing any values for the slots and then providing some example values.
+3. Create an `initialize` method so that the `n` slot is computed automatically and does not have to be provided.
+4. Create a `Diag()` helper function to create a new `Diag` object, with the user only having to specify the off-diaognal elements.
+5. Create a `show` method to state the size of the matrix and print the off-diagonal elements.
 
 
 
 ---
 
-# Refs
+# References
+
+Main reference for this section, goes a bit further (including R6):
+Wickham, H, _Advanced R_ (2nd edn), _Object-oriented programming section_, https://adv-r.hadley.nz/oo.html
+
+Fun example creating `Turtle` and `TurtleWithPen` classes to create simple graphics by moving the turtle:
+https://stuartlee.org/2019/07/09/s4-short-guide/ 
 

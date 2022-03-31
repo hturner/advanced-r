@@ -45,8 +45,6 @@ ticks <- function() "```"
 set.seed(1)
 ```
 
----
-
 class: inverse middle
 
 # Profiling
@@ -72,7 +70,7 @@ We will use the **profvis** package to visualise profiling results.
 The following code is saved in `profiling-example.R` and uses `profvis::pause` 
 to wait 0.1s inside each function
 
-```{r}
+```r
 top_level <- function() {
   profvis::pause(0.1)
   middle_level()
@@ -95,7 +93,8 @@ bottom_level <- function() {
 
 Source the code to be profiled and pass the function call to be profiled to 
 `profvis()`
-```{r}
+```{r, eval = FALSE}
+library(profvis)
 source("profiling-example.R")
 profvis(top_level())
 ```
@@ -131,9 +130,10 @@ No changes in memory are recorded as no objects are created or deleted.
 The Data tab shows a table with the memory and time usage for each function call. The nested calls can be expanded/collapsed to show/hide the lines of the table nested within a particular call.
 ![Screenshot of the data tab in the profvis HTML output. A table with columns "Code" (function name), "File" (name of source file containing function), "Memory (MB)" and "Time (ms)".](profiling-example-data-tab.png)
 
-```{r}
+```{r, eval = FALSE}
 devtools::install_github("csgillespie/efficient",
-                         INSTALL_opts = "--with-keep.source", force = TRUE)
+                         INSTALL_opts = "--with-keep.source",
+                         force = TRUE)
 library("efficient")
 profvis(simulate_monopoly(10000))
 ```
@@ -146,7 +146,7 @@ To illustrate memory profiling we can consider a loop that concatenates values.
 
 As it is a small code snippet, we can pass to profvis directly
 
-```{r}
+```{r, eval = FALSE}
 profvis({
   x <- integer()
   for (i in 1:10000) {
@@ -203,7 +203,7 @@ The *efficient* package contains the `simulate_monopoly()` function to simulate 
 # Your Turn
 
 1. Install the *efficient* package with the following code to keep the code source files:
-```{r}
+```r
 remotes::install_github("csgillespie/efficient",
                          INSTALL_opts = "--with-keep.source")
 ```
@@ -213,7 +213,7 @@ remotes::install_github("csgillespie/efficient",
 ---
 
 Use `bench::mark()` to test your changes. Create a wrapper for each function to run it `n` times with different seeds, e.g.
-```{r}
+```{r, eval = FALSE}
 run_move_square <- function(n){
   x <- numeric(n)
   for (i in 1:n) {
@@ -262,11 +262,11 @@ The overhead of calling a function in C++ is much lower than in R.
 # C++ basics
 
 Consider an R function `add_r()` to add two numbers
-```{r}
+```r
 add_r <- function(x, y) x + y
 ```
 Here's how we might write an equivalent `add_cpp()` function in C++
-```{Rcpp}
+```{cpp, eval = FALSE}
 double add_cpp(double x, double y) { 
   double value = x + y;
   return value;
@@ -305,12 +305,14 @@ add_cpp
 add_cpp(3, 5)
 ```
 
+---
+
 # Stand-alone C++ files
 
 It is better to define functions in C++ files (extension `.cpp`). These files will be recognised by RStudio and other IDEs, with the usual benefits.
 
 The C++ file should have these lines at the top:
-```
+```{cpp, eval = FALSE}
 #include <Rcpp.h>
 using namespace Rcpp;
 ```
@@ -325,7 +327,7 @@ Above each function we want to use in R, add `// [[Rcpp::export]]`
 
 The following is in the file `add_cpp2.cpp`
 
-```{cpp}
+```{cpp, eval = FALSE}
 #include <Rcpp.h>
 using namespace Rcpp;
 
@@ -335,6 +337,20 @@ double add_cpp2(double x, double y) {
   return value;
 }
 ```
+
+---
+
+# `sourceCpp()`
+
+Now we can use `sourceCpp()` to make the C++ functions available in R
+
+```{r}
+sourceCpp("add_cpp2.cpp")
+add_cpp2(5, 9)
+```
+???
+could put benefits here: syntax highlighting, avoid mistakes switching from R to C code, line numbers for compilation errors, highlighting errors (e.g. missing ";")
+
 
 ---
 
@@ -372,7 +388,7 @@ double: more bits used to represent a real number vs single precision
 
 # Example: no inputs, scalar output
 
-```{cpp}
+```{cpp, eval = FALSE}
 int one() {
   return 1;
 }
@@ -382,7 +398,7 @@ int one() {
 
 # Example: if/else (scalar input, scalar output)
 
-```{cpp}
+```{cpp, eval = FALSE}
 int signC(int x) {
   if (x > 0) {
     return 1;
@@ -399,7 +415,7 @@ int signC(int x) {
 # For loop syntax
 
 A C++ for loop has the form
-```{cpp}
+```{cpp, eval = FALSE}
 for(int i = 0; i < n; ++i) {
   total += x[i];
 }
@@ -415,7 +431,7 @@ for(int i = 0; i < n; ++i) {
 
 # Example: for loop (vector input, scalar output)
 
-```{cpp}
+```{cpp, eval = FALSE}
 double sumC(NumericVector x) {
   int n = x.size();
   double total = 0;
@@ -432,7 +448,7 @@ double sumC(NumericVector x) {
 
 # Example: while loop (vector input, scalar output)
 
-```{cpp}
+```{cpp, eval = FALSE}
 double sumC(NumericVector x) {
   int n = x.size();
   double total = 0;
@@ -455,7 +471,7 @@ double sumC(NumericVector x) {
 The following computes the Euclidean distances 
 $$d_i  = \sqrt{(x - y_i)^2}$$
 
-```{cpp}
+```{cpp, eval = FALSE}
 NumericVector distC(double x, NumericVector y) {
   int n = y.size();
   NumericVector out(n);
@@ -539,7 +555,7 @@ Rcpp vectors handle `NA`s in the corresponding type
 Each vector type has a corresponding matrix equivalent: `NumericMatrix`, `IntegerMatrix`, `CharacterMatrix` and `LogicalMatrix`. 
 
 Create a matrix called named `m1`
-```{cpp}
+```{cpp, eval = FALSE}
 NumericMatrix m1(10, 5);
 ```
 
@@ -552,7 +568,7 @@ NumericMatrix m1(10, 5);
 
 # Example: row sums (matrix input, vector output)
 
-```{Rcpp}
+```{cpp, eval = FALSE}
 NumericVector rowSumsC(NumericMatrix x) {
   int nrow = x.nrow(), ncol = x.ncol();
   NumericVector out(nrow);
@@ -596,7 +612,7 @@ gibbs_r <- function(N, thin) {
 }
 ```
 
-```{Rcpp}
+``````{cpp, eval = FALSE}
 #include <Rcpp.h>
 using namespace Rcpp;
 
@@ -623,7 +639,7 @@ NumericMatrix gibbs_cpp(int N, int thin) {
 
 # Rcpp sugar: vectorized functions
 
-```{cpp}
+```{cpp, eval = FALSE}
 NumericVector distC(double x, NumericVector y) {
   int n = y.size();
   NumericVector out(n);
@@ -634,7 +650,7 @@ NumericVector distC(double x, NumericVector y) {
 }
 ```
 
-```{cpp}
+```{cpp, eval = FALSE}
 NumericVector dist_sugar(double x, NumericVector y) {
   return sqrt(pow(x - y, 2));
 }
@@ -650,7 +666,7 @@ https://gallery.rcpp.org/articles/simulating-pi/
 
 # Rcpp sugar: row maximums
 
-```{cpp}
+```{cpp, eval = FALSE}
 NumericVector row_max(NumericMatrix mat) {
   int nrow = mat.nrow();
   NumericVector max(nrow);
@@ -660,9 +676,27 @@ NumericVector row_max(NumericMatrix mat) {
 }
 ```
 
-
 ---
 
+# References
+
+Similar scope to this module:
+Gillespie, C and Lovelace, R, _Efficient R programming_, _Rcpp section_, https://csgillespie.github.io/efficientR/performance.html#rcpp
+
+Going a bit further:
+Wickham, H, _Advanced R_ (2nd edn), _Rewriting R code in C++ chapter_, https://adv-r.hadley.nz/rcpp.html
+
+Not very polished, but broader coverage of Rcpp functionality:
+Tsuda, M.E., _Rcpp for everyone_, https://teuder.github.io/rcpp4everyone_en/300_Rmath.html
+
+Case studies (optimising by improving R code and/or using C++)
+https://robotwealth.com/optimising-the-rsims-package-for-fast-backtesting-in-r/
+https://gallery.rcpp.org/articles/bayesian-time-series-changepoint/ ([Rcpp Gallery](https://gallery.rcpp.org/) has all sorts of examples, many illustrating advanced features of Rcpp).
+
+
+
+???
+Masaki Tsuda
 
 TODO 
 Simulating pi [stat functions]
@@ -671,16 +705,4 @@ Gibbs sampler example [marices]
 MAYBE
 evalCpp()
 
----
----
 
-# `sourceCpp()`
-
-Now we can use `sourceCpp()` to make the C++ functions available in R
-
-```{r}
-sourceCpp("add_cpp2.cpp")
-add_cpp2(5, 9)
-```
-???
-could put benefits here: syntax highlighting, avoid mistakes switching from R to C code, line numbers for compilation errors, highlighting errors (e.g. missing ";")

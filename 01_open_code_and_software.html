@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>R Programming</title>
+    <meta charset="utf-8" />
+    <meta name="author" content=" Dr Heather Turner RSE Fellow, University of Warwick, UK " />
+    <meta name="date" content="2022-03-31" />
+    <script src="libs/header-attrs-2.11/header-attrs.js"></script>
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="extra.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# R Programming
+### <br>Dr Heather Turner<br>RSE Fellow, University of Warwick, UK<br>
+### 31 March 2022
+
+---
+
+
+
+
+
+class: inverse middle
+
+# Foundations of open code and software
+
+---
+
+See https://www.heatherturner.net/talks/gregynog2022/
+
+---
+
+class: inverse middle
+
+# Introduction to git/GitHub
+
+---
+
+# Version Control
+
+When developing code, we often want to keep old versions.
+
+We might save with different files names
+```
+code                               
+  ¦--simulations.R                  
+  ¦--simulations_correct_sd.R       
+  ¦--simulations_return_parameters.R
+```  
+or comment on changes
+
+```r
+## ED 2018-09-28 use geom_bar instead of geom_histogram
+## p &lt;- p + geom_histogram(stat = "identity")
+p &lt;- p + geom_bar(stat = "identity")
+## HT 2018-09-26 remove legend from plot
+p &lt;- p + theme(legend.position = "none")
+```
+Either way it can get messy and hard to track/revert changes!
+
+---
+
+# git
+
+git is a version control system that allows us to record changes made to files in a _repository_ or _repo_.
+
+Each version has a unique ID and metadata:
+ - Who created the new version
+ - A short description of changes made
+ - When the version was made
+ 
+Versions can be compared, restored and merged.
+
+---
+
+# git repository
+
+To get started, a repository must be created locally (within a working directory on your computer) or on a remote hosting platform (we'll use GitHub).
+
+git can then track when files/folders are 
+   - Added
+   - Modified
+   - Deleted
+   
+Repositories can have multiple _branches_ of development. We will work on a single branch, with the default name of `main`.  
+   
+---
+
+# Staging and committing
+
+Versions are created in a _commit_.
+
+We prepare the commit by _staging_ changes we want to record:
+ * _Untracked_ files (git treats the whole content as new)
+ * _Tracked_ files that have been modified or deleted since the last commit
+ 
+Think of it like taking photographs: we stage the scene by adding/removing people, or changing people's outfits, when we have a scene we want to save we take a photograph.
+   
+---
+
+# git + GitHub
+
+.pull-left[The full power comes by connecting a local repo to GitHub. 
+
+ - You can make changes locally and _push_ them to GitHub
+ - You can make changes via the GitHub website and later _pull_ them into your local copy.
+ - Collaborators can also push/pull changes to the repo.
+]
+.pull-right[
+&lt;img src="how_github_works.png" title="Diagram showing arrows to and from your repo and a central remote repo (GitHub). There are more arrows to and from GitHub and the web UI. There are also arrows to and from GitHub and &amp;quot;their repo&amp;quot; representing another person." alt="Diagram showing arrows to and from your repo and a central remote repo (GitHub). There are more arrows to and from GitHub and the web UI. There are also arrows to and from GitHub and &amp;quot;their repo&amp;quot; representing another person." width="100%" style="display: block; margin: auto;" /&gt;
+]
+---
+
+# GitHub
+
+Warwick GitHub Enterprise: https://github.warwick.ac.uk/
+ - Use for Warwick-specific, private projects
+ - Username will be ITS username
+
+GitHub: https://github.com/
+ - Free version allows private/public projects
+ - Can share/collaborate with people outside Warwick
+ - Develop your personal portfolio
+ 
+---
+
+# Explore a GitHub repository
+
+[demo]
+
+GitHub repositories have some nice features:
+
+- `README.md` displayed as HTML
+- Browsable commit history
+- _Issues_ where you/others can note bug reports/TODO/feature requests
+- _Pull requests_ (advanced) where you/others can propose changes to the code to be reviewed
+- _Actions_ (advanced) automated actions when you commit to the repo
+_ _Projects_ (advanced) to organize issues (To Do/In Progress/Done)
+- _Wiki_ for project documentation
+
+???
+https://github.com/r-devel/rcontribution
+https://github.com/r-devel/rdevguide
+ 
+---
+
+# Create a GitHub repository
+
+1. Login or sign up for a free account at https://www.github.com.
+    - Recommend to use personal email
+    - Username recommendations:
+        - Incorporate your actual name
+        - Reuse your username from other contexts.
+        - Use a name you can share in professional contexts.
+        - Use all lower case letters.
+2. Click on `+` in the top right to create a new, public, repository called `github-intro`.
+    - Choose to initialize the repository with a README file
+    
+---
+
+# Edit on GitHub
+
+1. Click the pencil icon on the `README.md` file to edit.
+ - Update the title
+ - Add some example content using markdown syntax
+ - Use the "Preview changes" tab to check your edits
+2. Scroll down to the **Commit changes** section
+ - Add a short description of your changes in the first dialog box, e.g. `add basic information to README`
+ - Click the green `Commit changes` button 
+        - This will stage and commit the file in one go.
+3. View the commit history and look at the diff for your commit.        
+
+
+See [Basic writing and formatting syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for more on editing markdown.
+
+???
+guide for good commit messages?
+license for off snippets? (CC0, CC-BY, Unlicense)
+
+---
+
+# Continue experimenting
+
+Further exercises to do while other people set up git/SSH keys.
+
+* Try uploading a picture from [Unsplash](https://unsplash.com/). Go to Add file &gt; Upload files. Edit your README to add the image.
+* Go to Add file &gt; Create new file. Type `subfolder/` in the "Name your file box" to create a subfolder. Now type `README.md` in the "Name your file box". Add some content to the README and commit - try some new markdown syntax, e.g. emoji or a table.
+* [Build a stunning README for your GitHub profile](https://towardsdatascience.com/build-a-stunning-readme-for-your-github-profile-9b80434fe5d7)
+
+---
+
+# Using git locally
+
+Check if you already have git by running the following command in a terminal (e.g. Terminal tab on RStudio).
+
+On MacOS/Linux (or Windows with Rtools)
+
+```sh
+which git
+```
+
+On Windows
+
+
+```sh
+where git
+```
+
+MacOS: If asked to install the Xcode command line tools, say yes - this will install git.
+
+---
+
+# Installing git
+
+Windows: 
+ - Use the installer from https://git-scm.com/downloads
+ - Check RStudio can find the git executable
+     - Go to Tools &gt; Global Options &gt; Git/SVN to check
+     - Restart RStudio before trying to use git
+     
+Linux:
+
+```sh
+sudo apt-get install git
+```
+or
+
+```sh
+sudo yum install git
+```
+
+---
+
+# Configure git
+
+Set the default name and email to associate with your git commits:
+
+```r
+library(usethis)
+use_git_config(
+  user.name = "Ada Lovelace",     # your full name
+  user.email = "ada@example.com"  # email associated with GitHub account
+  )
+```
+
+To keep your email private
+   - Go to https://github.com/settings/emails, select “Keep my email address private” and “Block command line pushes that expose my email” options
+   - Configure git to use the address provided of the form &lt;ID+username@users.noreply.github.com&gt;
+   
+???
+This is global
+
+---
+
+# Authentication
+
+GitHub requires authentication with a Personal Access Token or SSH key.
+
+| SSH keys                | PAT                 |
+|-------------------------|---------------------|
+| More setup (on Windows) | **usethis** helpers |
+| Once per computer+host  | Renew every 30 days (recommended) |
+| Need for HPC            | Need for **usethis**/other R packages |
+
+Recommend: setup SSH keys now, PAT later (when developing R packages)
+
+---
+
+# Windows: Enable OpenSSH
+
+1. In search, type 'Services' and click on the Services App.
+2. Find the OpenSSH Authentication Agent service in the list.
+3. Right-click on the OpenSSH Authentication Agent service, and choose 'Properties'.
+4. Change the Startup type: to Automatic. Click Apply.
+5. Click the Start button to change the service status to Running.
+6. Dismiss the dialog by clicking OK.
+
+---
+
+# Windows: Set the Shell in RStudio
+
+By default the terminal uses Windows command prompt. Switch to Git bash so that you can use the same commands as on MacOS/Linux.
+
+1. From the menu go to Tools &gt; Global Options &gt; Terminal.
+2. At "New terminals open with:" select "Git Bash". 
+3. In the Terminal tab, from the Terminal menu, select "Close all terminals. 
+4. Restart RStudio or open a new terminal.
+
+---
+
+# Windows: Set the `GIT_SSH` environment variable
+
+1. In the Terminal, type `where ssh`. Copy the path to OpenSSH, e.g. "C:\Windows\System32\OpenSSH\ssh.exe"
+2. In Search, start typing "environment" and select "Edit the system environment variables,
+3. Click Environment variables &gt; New and 
+ - In the "Variable Name:" box type: GIT_SSH
+ - In the "Variable Value:" box, paste the path to OpenSSH.
+4. Click OK and exit the dialogue.
+
+---
+
+# Set up SSH keys 
+
+GitHub recommends to use keys generated with the Ed25519 algorithm. 
+
+Check if you have existing keys, by running the terminal command
+
+```sh
+ls -al ~/.ssh/
+```
+Generate new keys, with the following command
+
+```sh
+ssh-keygen -t ed25519 -C "DESCRIPTIVE-COMMENT"
+```
+ - Replacing "DESCRIPTIVE-COMMENT" with e.g. "windows-github". 
+ - Save the key with a unique name, e.g. `~/.ssh/id_ed25519_github` (on Windows need to give full path here, for later instructions okay to use `~` for home directory)
+ - Use a strong passphrase (save in your password manager)
+
+???
+(some services require keys generated with the older RSA algorithm).
+On MacOS with XCode may need to use ecsa (https://gist.github.com/brennanMKE/8e09593ca4064deab59da807077d8f53)
+`ssh-keygen -t ecdsa -C ""DESCRIPTIVE-COMMENT"`
+May need to run as superuser
+` sudo su`
+don't forget to `exit`
+---
+
+# Add SSH keys to ssh-agent
+
+This means you won't have to keep entering the passphrase.
+
+Linux or Windows (Git Bash) terminal
+
+```sh
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519_github
+```
+MacOS 12.0 terminal:
+
+```sh
+eval "$(ssh-agent -s)"
+ssh-add --apple-use-keychain ~/.ssh/id_ed25519_github
+```
+For earlier versions of MacOS, use `-K` instead of `--apple-use-keychain`.
+
+---
+
+# Add public key to GitHub
+
+1. Copy the contents of the public key you have generated. E.g.
+run the following in a terminal, then copy the output.
+    
+    ```sh
+    cat ~/.ssh/id_ed255219_github.pub
+    ```
+2. On GitHub, click your profile picture (top right) and go to Settings &gt; SSH and GPG keys. 
+3. Click “New SSH key”. Paste your public key in the “Key” box.
+4. Use the descriptive comment from before for the title. 
+5. Click “Add SSH key”.
+---
+
+# MacOS: Add host to SSH config
+
+On Sierra 10.12.2 and higher, one more step is required to use the passphrase in your keychain.
+
+Open the SSH config file (create first if necessary). E.g. from the terminal:
+
+
+```sh
+touch ~/.ssh/config
+open ~/.ssh/config
+```
+
+Add the following lines to the `config` file and save
+```
+Host github
+ AddKeysToAgent yes
+ UseKeychain yes
+ IdentityFile ~/.ssh/id_ed25519_github
+```
+
+---
+
+# Create an RStudio project from a GitHub repo
+
+Now you can clone your GitHub repo locally.
+
+1. Go to your repo homepage on GitHub. Click the green "Code" button, select "SSH" and copy the address (of the form `git@github.com:username/reponame.git`).
+2. In RStudio, go to File &gt; New Project… &gt; Version Control &gt; Git.
+ - Enter the repo URL you just copied. The project directory name will be filled automatically.
+ - Browse to a location you want the project directory to be created.
+ - Click `Create Project`.
+ 
+---
+
+# Git Tab
+
+A Git tab is added to the pane that is in the top right by default, usually with Environment, History, and Connections tabs.
+
+The initial view is equivalent to the output of the terminal command `git status`. 
+.pull-left[
+We can *stage* changes to commit
+
+![](stage_changes.png)
+Underlying command:  
+`git add &lt;file/folder&gt;`.
+]
+
+.pull-right[
+Then *commit* a set of changes
+
+![](commit_changes.png)
+Underlying command:  
+`git commit -m "commit message"`
+]
+
+---
+
+# .gitignore
+
+At this stage you should see two untracked files in your Git Pane that were created when setting up the project: an `.Rproj` file and a `.gitignore` file.
+
+The `.gitignore` file specifies files that git should ignore - they won't appear in the git pane even as untracked files. 
+
+Examples of how to specify files in `.gitignore`:
+
+- Single file: `.Rhistory`
+- File pattern: `*.log` (all files with `.log` extension)
+- Directory (and files in it): `/dirname/`
+
+The `.gitignore` file must at least be staged to have an effect.
+
+---
+
+# First commit from RStudio
+
+Stage and commit the `.Rproj` file and `.gitignore` file, with the message "setup RStudio project".
+
+Click on the clock icon in the Git pane to view the history of previous commits. 
+
+Close the "Review Changes" window. Now click the green up arrow to push your changes to GitHub.
+
+Go to the repo on GitHub and verify your changes have been pushed.
+
+---
+
+# Conflicting changes   
+
+Edit the README once more on GitHub in a new commit.
+
+Back in RStudio, make a change to the README and make a new commit. Try to push your commit to GitHub - you will get an error!
+
+Close the dialog box and click the blue down arrow to pull the changes made on GitHub.
+
+If the changes are independent, they will be automatically merged. Otherwise we need to fix the conflicts.
+
+---
+
+# Merge conflicts
+
+Each conflicting section will be marked up in the file, e.g.
+
+```
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+Change on RStudio
+=======
+Change on GitHub.
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; f7fb00984a9575892579481ea4ed52b8a5e6093a
+```
+
+`HEAD` indicates your local version. The string of letters and numbers indicates the commit you have pulled from GitHub. The string of `=` separates the two versions.
+
+Edit the file to remove these markers and select only one version of the section, combine the two versions, or replace with something else!
+
+Save the file, stage and commit with the message "merge change from GitHub".
+
+---
+
+# Set `.Rprofile` to check git status
+
+Open your `.Rprofile`
+```r
+usethis::edit_r_profile()
+```
+and add the following (credit: Lisa De Bruine)
+```r
+cat(crayon::cyan(system("git status -u no", TRUE)))
+```
+This will run `git status` from the command line when you start R, giving a (cyan coloured!) message like
+```
+On branch main Your branch is behind 'origin/main' by 1 commit,
+and can be fast-forwarded.   (use "git pull" to update your  
+local branch)  nothing to commit, working tree clean
+```
+
+If your main branch is behind the main branch on _origin_ (GitHub), you should pull changes before making new edits.
+
+???
+`-u no` means don't show untracked files
+It is better to pull changes before conflicts arise.
+
+---
+
+# Stashing changes
+
+If you have uncommitted changes on tracked files, git won't let you pull from GitHub.
+
+In this case you can _stash_ your changes:
+
+```sh
+git stash
+```
+This takes you back to the last commit. Now pull from GitHub and if necessary merge conflicts. Once you are back in sync with GitHub, you can apply your stashed changes:
+
+```sh
+git stash pop
+```
+Again, if there are conflicts you can resolve them as usual.
+
+If you pull regularly and only make changes locally, conflicts are rare!
+
+---
+
+# Amend commit (before pushing)
+
+Sometimes we don't stage everything we intended to include in a commit, e.g. we committed a file before saving the latest changes.
+
+If we haven't yet pushed the commit to GitHub, simply stage the extra commits and check the "Amend previous commit" box under the commit message. 
+
+The original commit message will be shown - you can edit this to change the message for the amended commit (useful if you forgot to reference a GitHub issue number)
+
+---
+
+# Undo last commit (before pushing)
+
+Alternatively, you can undo a commit before pushing.
+
+To undo the commit, keeping files as they are
+
+```sh
+git reset HEAD~1
+```
+(change the 1 to a higher number to go back more than 1 commit).
+
+To undo the commit *and all the changes in that commit*
+
+```sh
+git reset --hard HEAD~1
+```
+This goes back to the version at the last commit. 
+
+---
+
+# Undo last commit (after pushing)
+
+It is best practice to create a new commit that undoes the changes. Run
+
+```sh
+git revert HEAD
+```
+This edits the files to undo the changes in your last commit. You should then commit these edits, with a relevant message.
+
+It is possible to use `git reset --hard` to undo a commit and then `git push origin main --force` to force this change onto GitHub. Sometimes repository maintainers do not allow this as it rewrites the history, which can cause problems for people that have cloned or forked your repo.
+
+---
+
+# General workflow
+
+* Commit regularly, once you've got a small complete change, e.g. a working draft of a function, a bug fix, a draft of a README.
+ - It is easier to review/revert changes if they relate to a single file or common issue
+* Push to GitHub before closing RStudio
+ - Allow time for small corrections
+ - Push often enough that GitHub is a useful backup
+ 
+---
+
+# Adding an existing project to GitHub
+
+The simplest approach is to create a GitHub repo with just a README as before, create the corresponding RStudio project, copy your files into the new directory, stage and commit them.
+
+If you are already using git and want to move the project to GitHub, see [Adding a local repository to GitHub using git](https://docs.github.com/en/get-started/importing-your-projects-to-github/importing-source-code-to-github/adding-locally-hosted-code-to-github#adding-a-local-repository-to-github-using-git). Once the project is on GitHub you can clone it into an RStudio project.
+
+---
+
+# References
+
+Bryan, J et al, _Happy Git with R_, https://happygitwithr.com/.
+
+
+???
+
+TO ADD
+
+GitHub extras: issues
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="libs/remark-latest.min.js"></script>
+<script src="macros.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "googlecode",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

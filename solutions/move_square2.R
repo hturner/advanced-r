@@ -1,4 +1,4 @@
-updated_fn <- function(current) {
+move_square2 <- function(current) {
   # data.frame -> matrix
   rolls = matrix(sample(1:6, 6, replace = TRUE), ncol = 2)
   Total = rowSums(rolls)			

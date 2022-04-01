@@ -11,8 +11,6 @@ output:
     keep_md: true
     nature:
       beforeInit: "macros.js"
-      highlightStyle: googlecode
-      highlightLines: true
       countIncrementalSlides: false
       ratio: "16:9"
 always_allow_html: yes      
@@ -105,21 +103,21 @@ In RStudio this will open in the source pane, click "show in new window" button 
 
 ---
 
-![Screenshot of the profvis HTML output. At the bottom, a stacked set of horizontal bars along a time axis, representing the length of time in each function. At a given time, the top-level function is at the bottom of the stack with each nested function stacked on top. The source code is shown at the top of the screenshot, with a horizontal bar for each line, showing the time spent. Interpretation on next slide](profiling-example.png)
+class: middle
+
+![:scale 80%, Screenshot of the profvis HTML output. At the bottom, a stacked set of horizontal bars along a time axis, representing the length of time in each function. At a given time, the top-level function is at the bottom of the stack with each nested function stacked on top. The source code is shown at the top of the screenshot, with a horizontal bar for each line, showing the time spent. Interpretation on next slide](profiling-example.png)
 ---
 
 # Interpretation
 
-The bottom plot is called a *flame graph*.
-
-The yellow bars in the flame graph correspond to lines in the source file shown above, for which time has been recorded.
+The bottom plot is called a *flame graph*. The yellow bars correspond to lines in the source file shown above this graph, for which time has been recorded.
 
 In the overall time of 250ms we see 
  - 4 equal-sized blocks for each pause of 0.1s
  - Nearly all time is spent in the top-level function
  - Nearly half the time is spent in the mid-level function
  - Nearly half the time is also spent in the bottom-level function as it is called twice
- - There is one sample where the `cmp` function is being executed (called by compiler:::tryCmpfun). When a function is first called, R attempts to compile it to byte code so that it can call the compiled version in subsequent calls.
+ - There is one sample where the `cmp` function is being executed (called by `compiler:::tryCmpfun`). When a function is first called, R attempts to compile it to byte code so that it can call the compiled version in subsequent calls.
  
 No changes in memory are recorded as no objects are created or deleted.
 
@@ -127,16 +125,8 @@ No changes in memory are recorded as no objects are created or deleted.
 
 # Data tab
 
-The Data tab shows a table with the memory and time usage for each function call. The nested calls can be expanded/collapsed to show/hide the lines of the table nested within a particular call.
-![Screenshot of the data tab in the profvis HTML output. A table with columns "Code" (function name), "File" (name of source file containing function), "Memory (MB)" and "Time (ms)".](profiling-example-data-tab.png)
-
-```{r, eval = FALSE}
-devtools::install_github("csgillespie/efficient",
-                         INSTALL_opts = "--with-keep.source",
-                         force = TRUE)
-library("efficient")
-profvis(simulate_monopoly(10000))
-```
+The Data tab shows a table with the memory and time usage for each function call. The nested calls can be expanded/collapsed to show/hide the corresponding lines.
+![:scale 75%, Screenshot of the data tab in the profvis HTML output. A table with columns "Code" (function name), "File" (name of source file containing function), "Memory (MB)" and "Time (ms)".](profiling-example-data-tab.png)
 
 ---
 
@@ -160,7 +150,7 @@ profvis({
 ![Flame graph for profiling the contenation example. Interpretation on next slide.](profiling-memory.png)
 ---
 
-# <GC>
+# `<GC>`
 
 As expected, the majority of the time is spent within `c()`, but we also see a lot time spent in `<GC>`, the garbage collector.
 
@@ -190,19 +180,24 @@ Memory profiling can help to identify short-lived objects that might be avoided 
 
 # Monopoly
 
-In the monopoly board game, players roll two die to move round the board. Players buy assets on which they can charge rent or taxes and aim to make the most money.
+.pull-left-66[In the monopoly board game, players roll two die to move round the board. Players buy assets on which they can charge rent or taxes and aim to make the most money.
 
 The squares on the board represent
 - Properties, train stations or utility companies to buy
 - Events that trigger an action, e.g. paying a tax or going to jail
 
-The *efficient* package contains the `simulate_monopoly()` function to simulate game play, which we'll use to practice profiling.
+The *efficient* package contains the `simulate_monopoly()` function to simulate game play, which we'll use to practice profiling.]
+.pull-right-33[
+<br>
+<br>
 ![Photo showing part of the monopoly game board, from the corner with the "Go" square.](monopoly.jpg)
+]
+
 ---
 
 # Your Turn
 
-1. Install the *efficient* package with the following code to keep the code source files:
+1. Install the **efficient** package with the following code to keep the code source files:
 ```r
 remotes::install_github("csgillespie/efficient",
                          INSTALL_opts = "--with-keep.source")
@@ -256,6 +251,55 @@ results
 
 ???
 The overhead of calling a function in C++ is much lower than in R.
+
+---
+
+# Set up to use C++
+
+To use C++, you need a working C++ compiler. 
+
+On MacOS/Windows there is some setup to do, but it will also set you up to
+ - Develop packages in R
+ - Install packages from GitHub that include  C/C++ code
+ 
+On Linux, you will usually have a C++ compiler installed, but you might as well 
+get set up to develop R packages too.
+
+---
+
+# Linux
+
+Debian/Ubuntu
+
+```sh
+apt-get update
+apt-get install r-base-dev
+```
+
+Fedora/RedHat: should be set up already.
+ 
+---
+
+# MacOS
+
+Option 1
+ - [Register as an Apple developer (for free)](https://developer.apple.com/programs/register/)
+ - In the terminal, run
+     ```sh
+     xcode-select --install
+     ```
+Option 2 (more convenient but installs a lot you don't need)
+ - Install the current release of full [Xcode from the Mac App Store](https://itunes.apple.com/ca/app/xcode/id497799835?mt=12)
+
+---
+
+# Windows
+
+Install RTools from : https://cran.r-project.org/bin/windows/Rtools/.
+ - Select "RTools 4.0", then download and run rtools40-x86_64.exe.
+ 
+You will need to update RTools when you upgrade to R 4.2.0 (scheduled for 
+release on 22 April 2022).
 
 ---
 
@@ -362,6 +406,13 @@ could put benefits here: syntax highlighting, avoid mistakes switching from R to
  - Comparison operators are the same as R (`==`, `!=`, `>`, etc)
  - One-line comments start with `//`.
  - Multi-line comments use `/*` `*/` delimiters
+ 
+```cpp
+/*
+Example
+multi-line comment
+*/
+```
 
 ---
 
@@ -423,8 +474,8 @@ for(int i = 0; i < n; ++i) {
 - Syntax: `for(initialisation; condition; increment)`
     - Initialize integer `i` at zero
     - Continue as long as `i` is less than `n`
-    - Increment `i` by 1 after each iteration (`++i` is `i = i + 1`)
-- `total += x[i]` is `total = total + x[i]`
+    - Increment `i` by 1 after each iteration (`++i` is equivalent to `i = i + 1`)
+- `total += x[i]` is equivalent to `total = total + x[i]`
 - **Vector indices start at zero**
 
 ---
@@ -474,44 +525,44 @@ $$d_i  = \sqrt{(x - y_i)^2}$$
 ```{cpp, eval = FALSE}
 NumericVector distC(double x, NumericVector y) {
   int n = y.size();
-  NumericVector out(n);
+  NumericVector dist(n);
   for(int i = 0; i < n; ++i) {
-    out[i] = sqrt(pow(ys[i] - x, 2.0));
+    dist[i] = sqrt(pow(ys[i] - x, 2.0));
   }
   return out;
 }
 ```
 
-`out(n)` is used to create a numeric vector named `out` of length `n`. `v(n)` would create a vector named `v`.
+`dist(n)` is used to create a numeric vector named `dist` of length `n`. `v(n)` would create a vector named `v`.
 
 ---
 
-# Rcpp Functions
+# C++ Functions
 
-`pow` is a standard C++ functon for computing a value raised to a power. However, **Rcpp** defines a vectorized version of this.
+`pow` is a standard C++ functon for computing a value raised to a power. 
 
-Look for available functions loaded with Rcpp header
-- In the [Official API documentation](https://dirk.eddelbuettel.com/code/rcpp/html/files.html) (click on Rcpp > sugar > functions)
-- In the [Unofficial API documentation](https://thecoatlessprofessor.com/programming/cpp/unofficial-rcpp-api-documentation/)
+Both `pow` and `sqrt` are functions from the `<cmath>` library, see e.g. [w3schools C++ math](https://www.w3schools.com/cpp/cpp_math.asp).
+
+To use `<cmath>` functions in C++ code, we would normally need to include the `<cmath>` header in our `.cpp` file. However, **Rcpp** defines its own version of these functions, so we can use them with just the **Rcpp** header.
 
 ---
 
 # Your Turn
 
-1. Create a new C++ file to work in. Add the headers required for Rcpp.
+1. Create a new C++ file to work in. The RStudio template C++ file already includes the headers required for Rcpp. Delete the extra content, aprt from the `// [[Rcpp::export]]` comment.
 2. Convert the following R function that computes a weighted mean to C++
-```{r}
-wmean_r <- function(x, w){
-  n <- length(x)
-  total <- total_w <- 0
-  for (i in 1:n){
-    total <- total + x[i] * w[i]
-    total_w <- total_w + w[i]
-  }
-  total/total_w
-}
-```
-3. Use `sourceCpp()` to source in your function. Use `bench::mark()` to compare `wmean_r()`, `wmean_cpp()` and thet **stats** function `weighted.mean()`.
+    ```{r}
+    wmean_r <- function(x, w){
+      n <- length(x)
+      total <- total_w <- 0
+      for (i in 1:n){
+        total <- total + x[i] * w[i]
+        total_w <- total_w + w[i]
+      }  
+      total/total_w
+    }
+    ```
+3. Use `sourceCpp()` to source in your function. Use `bench::mark()` to compare `wmean_r()`, `wmean_cpp()` and the **stats** function `weighted.mean()`.
 
 ```{cpp, include = FALSE}
 double wmean_cpp(NumericVector x, NumericVector w) {
@@ -545,8 +596,8 @@ Rcpp vectors handle `NA`s in the corresponding type
 |-----------------|------------|
 | NumericVector   | NA_REAL    |
 | IntegerVector   | NA_INTEGER |
-| CharacterVector | NA_LOGICAL |
-| LogicalVector   | NA_STRING  |
+| CharacterVector | NA_STRING  |
+| LogicalVector   | NA_LOGICAL |
 
 ---
 
@@ -560,9 +611,12 @@ NumericMatrix m1(10, 5);
 ```
 
 - Subset with `()`, e.g. `m1(3, 2)` for the value in row 3, column 2.
-- **Rcpp** enables selection of whole row, e.g. `m1(3,_)`, or column, e.g. `m1(_,2)`
 - The first element is `m1(0, 0)`.
 - Use `.nrow` and `.ncol` methods to get the number of rows and columns 
+- Assign matrix elements as follows
+```{cpp, eval = FALSE}
+m1(0, 0) = 1;
+```
 
 ---
 
@@ -590,11 +644,22 @@ NumericVector rowSumsC(NumericMatrix x) {
 
 As in R, Rcpp provides d/p/q/r functions for the density, distribution function, quantile function and random generation.
 - Functions in the `Rcpp::` namespace return a vector.
-- Functions in the `R::` namespace return a scalar
+- Functions in the `R::` namespace (also provided by the **Rcpp** R package) return a scalar
+
+For example we can sample a single value from a $N(0, 1)$ distribution by extracting the first element from a vector
+```cpp
+rgamma(1, 3, 1 / (y * y + 4))[0];
+```
+Or use the R::rgamma function to sample a single value directly
+```Rcpp
+R::rgamma(3, 1 / (y * y + 4))
+```
 
 ---
 
 # Your Turn
+
+In a new C++ file, convert the following gibbs sampler to C++
 
 ```{r}
 gibbs_r <- function(N, thin) {
@@ -612,7 +677,7 @@ gibbs_r <- function(N, thin) {
 }
 ```
 
-``````{cpp, eval = FALSE}
+```{cpp, include = FALSE}
 #include <Rcpp.h>
 using namespace Rcpp;
 
@@ -634,10 +699,58 @@ NumericMatrix gibbs_cpp(int N, int thin) {
 }
 ```
 
+```{r, include = FALSE}
+sourceCpp("solutions/gibbs.cpp")
+```
+
+---
+
+# Your Turn (ctd)
+
+Create a wrapper function to set the seed as follows:
+
+```{r}
+set_seed <- function(expr){
+  set.seed(1)
+  eval(expr)
+}
+```
+
+Benchmark your `gibbs_r()` and `gibbs_c()` functions with N = 100 and thin = 10, using your wrapper function to set the seed
+
+---
+
+# Rcpp sugar
+
+Rcpp provides some "syntactic sugar" to allow us to write C++ code that is more like R code.
+
+One example is operating on rows or columns of matrices. So far we have seen how to update individual elements of a `NumericMatrix`. Rcpp lets us extract an update whole rows/columns, e.g.
+
+```{Rcpp, eval = FALSE}
+mat(i, _) = NumericVector::create(x,y);
+```
+
+A whole column would be extracted with `mat(_, j)`.
+
+---
+
+# Vectorized functions
+
+The vectorized random generation functions are another example of Rcpp sugar. 
+
+Rcpp provide many more vectorized functions, for example:
+ - arithmetic operators (`+`, `-`, `*`, `\`)
+ - logical operators (`==`, `!`, `=<`)
+ - arithmetic functions (`sqrt`, `pow`, ...)
+ - statistical summaries (`mean`, `median`, )
+ 
+In addition, Rcpp provides many R-like functions, such as `which_max` or `rowSums`, see [Unofficial API documentation](https://thecoatlessprofessor.com/programming/cpp/unofficial-rcpp-api-documentation/#sugar) for a full list.
 
 ---
 
 # Rcpp sugar: vectorized functions
+
+Recall our distance function from earlier:
 
 ```{cpp, eval = FALSE}
 NumericVector distC(double x, NumericVector y) {
@@ -650,6 +763,8 @@ NumericVector distC(double x, NumericVector y) {
 }
 ```
 
+with Rcpp vectorization, we can simplify this to:
+
 ```{cpp, eval = FALSE}
 NumericVector dist_sugar(double x, NumericVector y) {
   return sqrt(pow(x - y, 2));
@@ -658,13 +773,9 @@ NumericVector dist_sugar(double x, NumericVector y) {
 
 ---
 
-# Rcpp sugar: 
+# Example: row maximums
 
-https://gallery.rcpp.org/articles/simulating-pi/
-
----
-
-# Rcpp sugar: row maximums
+This example combines row-indexing and a vectorized function (`max()`).
 
 ```{cpp, eval = FALSE}
 NumericVector row_max(NumericMatrix mat) {
@@ -675,6 +786,21 @@ NumericVector row_max(NumericMatrix mat) {
   return max;
 }
 ```
+---
+
+# Your turn
+
+The following R function can be used to simulate the value of pi
+```{r}
+piR <- function(N) {
+    x <- runif(N)
+    y <- runif(N)
+    d <- sqrt(x^2 + y^2)
+    return(4 * sum(d < 1.0) / N)
+}
+```
+
+Convert this to C++, taking advantage of the vectorized Rcpp functions.
 
 ---
 
